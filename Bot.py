@@ -1,0 +1,1 @@
+#Thinking about using implementing an evaluation system to build the bot of.
