@@ -94,29 +94,32 @@ class Board:
         }
     
     def get_Pawn_moves(self, row, file, colour):
-        moves = []
+        global legal_moves
+        legal_moves = []
+        
         if colour == Piece.White:
             direction = -1
         else:
             direction = 1
         if colour == Piece.White:
-            start_row = 6
+            start_row = 6         #if a pawn is on its start row, it can have different behavior
         else:
             start_row = 1
 
         if self.is_empty(row + direction, file): # single ands double forward for pawn
-            moves.append((row + direction, file))
+            legal_moves.append((row + direction, file))
             if row == start_row and self.is_empty(row + 2 * direction, file):
-                moves.append((row + 2 * direction, file))
+                legal_moves.append((row + 2 * direction, file))
             
         if self.is_enemy(row + direction, file + 1, colour): # capture for pawn
-            moves.append((row + direction, file + 1))
+            legal_moves.append((row + direction, file + 1))
         if self.is_enemy(row + direction, file - 1, colour):
-            moves.append((row + direction, file - 1))
-        return moves
+            legal_moves.append((row + direction, file - 1))
+        return legal_moves
     
     def get_legal_moves(self, piece_type, colour, position):
         row, file = position // 8, position % 8    # this works, pick a number from 0 - 720 to test
+        global moves
         moves = []
         if piece_type == Piece.Pawn:
             moves = self.get_Pawn_moves(row, file, colour)
@@ -144,8 +147,8 @@ class Board:
     def is_enemy(self, row, file, color):
         index = row * 8 + file
         if 0 <= row < 8 and 0 <= file < 8:
-            piece = self.Square[index]
-            return piece != Piece.Empty and (piece & Piece.White) != color
+            piece = self.Square[index]          # refers to the piece at that index of the board
+            return piece != Piece.Empty and (piece & Piece.White) != color # check if square is empty and if the colours match
         return False
 
     def draw_pieces(self, screen, dragging_piece=None, dragging_pos=(0, 0)):
@@ -166,8 +169,7 @@ dragging = False
 offset_x = 0
 offset_y = 0
 original_square = None
-load_position_from_fen(chess_board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1") # that is a fen string
-
+load_position_from_fen(chess_board, "RNBQKBNR/PPPPPPPP/8/8/8/8/pppppppp/rnbqkbnr w - - 0 1") # that is a fen string
 
 while running:
     
@@ -197,7 +199,7 @@ while running:
                     piece_color = Piece.Black
                 
                 selected_piece_type = selected_piece & 0b111  # Calculate legal moves  # Get the type by isolating last 3 bits
-#####                legal_moves = chess_board.get_legal_moves(selected_piece_type, piece_color, original_square)
+                legal_moves = chess_board.get_legal_moves(selected_piece_type, piece_color, original_square)
                 chess_board.Square[original_square] = Piece.Empty # when a move is being chosen, clears the og square
 
 
@@ -214,11 +216,11 @@ while running:
         
             
                 
-#####            if (new_row, new_file) in legal_moves:
-            chess_board.Square[new_index] = selected_piece     # Move piece
-#####            else:
-                # Handle invalid moves (e.g., snapping back to original position)
-#####            chess_board.Square[original_square] = selected_piece
+            if (new_row, new_file) in moves:
+                chess_board.Square[new_index] = selected_piece     # Move piece
+            else:
+                # Handle invalid moves  snaps back to original position
+                chess_board.Square[original_square] = selected_piece
 
             selected_piece = None # resets everything to the original state to cancel the dragging
             dragging = False
