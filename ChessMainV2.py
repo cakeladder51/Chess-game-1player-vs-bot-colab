@@ -94,9 +94,7 @@ class Board:
         }
     
     def get_Pawn_moves(self, row, file, colour):
-        global legal_moves
         legal_moves = []
-        
         if colour == Piece.White:
             direction = -1
         else:
@@ -110,11 +108,56 @@ class Board:
             legal_moves.append((row + direction, file))
             if row == start_row and self.is_empty(row + 2 * direction, file):
                 legal_moves.append((row + 2 * direction, file))
-            
+    
         if self.is_enemy(row + direction, file + 1, colour): # capture for pawn
             legal_moves.append((row + direction, file + 1))
         if self.is_enemy(row + direction, file - 1, colour):
             legal_moves.append((row + direction, file - 1))
+        return legal_moves
+    
+    def get_Rook_moves(self, row, file, colour):
+        legal_moves = []
+
+        # Up direction
+        for r in range(row - 1, -1, -1):   # if row = 7, for example, it would ignore the square its on and iterate to row 0 (inclusive, exclusive)
+            if self.is_empty(r, file):
+                legal_moves.append((r, file))
+            elif self.is_enemy(r, file, colour):
+                legal_moves.append((r, file))
+                break
+            else:
+                break
+
+        # down direction
+        for r in range(row + 1, 8):    # if row = 0, for example, it would ignore the square its on and iterate to row 7 (inclusive, exclusive)
+            if self.is_empty(r, file):
+                legal_moves.append((r, file))
+            elif self.is_enemy(r, file, colour):
+                legal_moves.append((r, file))
+                break
+            else:
+                break
+        
+        # Left direction
+        for f in range(file - 1, -1, -1):   # if file = 7, for example, it would ignore the square its on and iterate to file 0 (inclusive, exclusive)
+            if self.is_empty(row, f):
+                legal_moves.append((row, f))
+            elif self.is_enemy(row, f, colour):
+                legal_moves.append((row, f))  # Capture
+                break
+            else:
+                break  # Stop if a piece blocks the way                    
+        
+        # Right direction
+        for f in range(file + 1, 8):    # if file = 0, for example, it would ignore the square its on and iterate to file 7 (inclusive, exclusive)
+            if self.is_empty(row, f):
+                legal_moves.append((row, f))
+            elif self.is_enemy(row, f, colour):
+                legal_moves.append((row, f))  # Capture
+                break
+            else:
+                break  # Stop if a piece blocks the way            
+
         return legal_moves
     
     def get_legal_moves(self, piece_type, colour, position):
