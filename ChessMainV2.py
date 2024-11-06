@@ -92,6 +92,29 @@ class Board:
             Piece.White | Piece.King: white__king,
             Piece.Black | Piece.King: Black__king
         }
+    
+    def get_Pawn_moves(self, row, file, colour):
+        moves = []
+        if colour == Piece.White:
+            direction = -1
+        else:
+            direction = 1
+        if colour == Piece.White:
+            start_row = 6
+        else:
+            start_row = 1
+
+        if self.is_empty(row + direction, file): # single ands double forward for pawn
+            moves.append((row + direction, file))
+            if row == start_row and self.is_empty(row + 2 * direction, file):
+                moves.append((row + 2 * direction, file))
+            
+        if self.is_enemy(row + direction, file + 1, colour): # capture for pawn
+            moves.append((row + direction, file + 1))
+        if self.is_enemy(row + direction, file - 1, colour):
+            moves.append((row + direction, file - 1))
+        return moves
+    
     def get_legal_moves(self, piece_type, colour, position):
         row, file = position // 8, position % 8    # this works, pick a number from 0 - 720 to test
         moves = []
@@ -107,26 +130,24 @@ class Board:
             moves = self.get_Queen_moves(row, file, colour)
         if piece_type == Piece.King:
             moves = self.get_King_moves(row, file, colour)
+        
 
-        for move in moves:
-            if self.is_valid_move(move, colour):
-                return move
-        def get_Pawn_moves():
-            moves = []
-            if colour == Piece.White:
-                direction = -1
-            else:
-                direction = 1
-            if colour == Piece.White:
-                start_row = 6
-            else:
-                start_row = 1
-
-            if self.is_empty(row + direction, file):
-                moves.append((row + direction, file))
-                if row == start_row and self.is_empty(row + 2 * direction, file):
-                    moves.append((row + 2 * direction, file))                     
     
+
+        
+        return moves
+    
+    def is_empty(self, row, file):
+        index = row * 8 + file
+        return 0 <= row < 8 and 0 <= file < 8 and self.Square[index] == Piece.Empty
+
+    def is_enemy(self, row, file, color):
+        index = row * 8 + file
+        if 0 <= row < 8 and 0 <= file < 8:
+            piece = self.Square[index]
+            return piece != Piece.Empty and (piece & Piece.White) != color
+        return False
+
     def draw_pieces(self, screen, dragging_piece=None, dragging_pos=(0, 0)):
         for index, piece in enumerate(self.Square):
             if piece != Piece.Empty and piece != dragging_piece:  #checks if a piece is to be rendered.
@@ -136,7 +157,7 @@ class Board:
                     col = index % 8             #if you think this doesnt work
                     screen.blit(piece_image, (col * single_square_size, row * single_square_size))
         if dragging_piece:
-            screen.blit(dragging_piece, dragging_pos)
+            screen.blit(selected_piece_img, dragging_pos)
     
 chess_board = Board()  # Initialised the board class so it can be called throughout the program
 
@@ -145,9 +166,11 @@ dragging = False
 offset_x = 0
 offset_y = 0
 original_square = None
-load_position_from_fen(chess_board, "2K3R1/8/B7/1P1pp2p/1r3Pp1/8/3Pbr1q/2N1k3 w - - 0 1") # that is a fen string
+load_position_from_fen(chess_board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1") # that is a fen string
+
 
 while running:
+    
     mouse_x, mouse_y = pygame.mouse.get_pos() # tracks mouse position
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -158,33 +181,51 @@ while running:
             row = mouse_y // single_square_size
             index = row * 8 + file               # gives its index which ranges 0 - 63
 
-            if chess_board.Square[index]:
-                piece = chess_board.Square[index]
-                selected_piece = chess_board.piece_images.get(piece)
+            if chess_board.Square[index] != Piece.Empty:
+                selected_piece = chess_board.Square[index]
+                selected_piece_img = chess_board.piece_images.get(selected_piece)
                 dragging = True
                 offset_x = mouse_x - (file * single_square_size) # substracts the orignal mouse pos ranging 0 - 720 from the new one also 0 - 720
                 offset_y = mouse_y - (row * single_square_size)
                 original_square = index # records the original square using the index
-                chess_board.Square[original_square] = Piece.Empty # when a move is being chosen, clears the og square 
-        elif event.type == pygame.MOUSEMOTION:
-            if dragging:
-                mouse_x, mouse_y = event.pos # if dragging, update the position
-        elif event.type == pygame.MOUSEBUTTONUP:
-            if dragging:
-                new_file = mouse_x // single_square_size # records the file/row of the updated pos
-                new_row = mouse_y // single_square_size
-                new_index = new_row * 8 + new_file
+                
+                
+                selected_piece = chess_board.Square[index]  ##################################################
+                if (selected_piece & Piece.White):
+                    piece_color = Piece.White & selected_piece
+                else:
+                    piece_color = Piece.Black
+                
+                selected_piece_type = selected_piece & 0b111  # Calculate legal moves  # Get the type by isolating last 3 bits
+#####                legal_moves = chess_board.get_legal_moves(selected_piece_type, piece_color, original_square)
+                chess_board.Square[original_square] = Piece.Empty # when a move is being chosen, clears the og square
 
-                  
 
-                chess_board.Square[new_index] = piece # puts the selected piece in the new square
+        
+        elif event.type == pygame.MOUSEMOTION and dragging:
+            mouse_x, mouse_y = event.pos # if dragging, update the position
 
-                selected_piece = None # resets everything to the original state to cancel the dragging
-                dragging = False
-                original_square = None
+                
+        elif event.type == pygame.MOUSEBUTTONUP and dragging:
+            new_file = mouse_x // single_square_size # records the file/row of the updated pos
+            new_row = mouse_y // single_square_size
+            new_index = new_row * 8 + new_file
+            
+        
+            
+                
+#####            if (new_row, new_file) in legal_moves:
+            chess_board.Square[new_index] = selected_piece     # Move piece
+#####            else:
+                # Handle invalid moves (e.g., snapping back to original position)
+#####            chess_board.Square[original_square] = selected_piece
+
+            selected_piece = None # resets everything to the original state to cancel the dragging
+            dragging = False
+            original_square = None
 
     Create_graphical_board()
-    chess_board.draw_pieces(screen, selected_piece if dragging else None, (mouse_x - offset_x, mouse_y - offset_y) if dragging else (0, 0)) # essentially just draws selected pieces if they are being dragged, else don't draw pieces that are not being dragged.
+    chess_board.draw_pieces(screen, selected_piece_img if dragging else None, (mouse_x - offset_x, mouse_y - offset_y) if dragging else (0, 0)) # essentially just draws selected pieces if they are being dragged, else don't draw pieces that are not being dragged.
     
    
     pygame.display.flip()
