@@ -10,6 +10,7 @@ running = True
 square_colour = ""
 peach = (237, 232, 208)
 chocolate = (85, 43, 0)
+highlight_colour = (0, 255, 0)
 
 white_pawn = pygame.transform.scale(pygame.image.load("Chess bot folder/white_pawn.png"), (single_square_size, single_square_size))
 Black_pawn = pygame.transform.scale(pygame.image.load("Chess bot folder/Black_pawn.png"), (single_square_size, single_square_size))
@@ -48,16 +49,6 @@ def load_position_from_fen(initilised_board, fen):
                 piece_type = piece_type_from_symbol[symbol.lower()]
                 initilised_board.Square[rank * 8 + file] = piece_type | piece_colour
                 file += 1
-
-def Create_graphical_board():
-    for file in range (8):
-        for rank in range (8):
-            isLightsquare = (file + rank) % 2 != 0
-            if isLightsquare:
-                square_colour = peach
-            else:
-                square_colour = chocolate
-            pygame.draw.rect(screen, square_colour, (single_square_size * file, single_square_size * rank , single_square_size , single_square_size ))
 
 class Piece:
     Empty = 0
@@ -160,6 +151,119 @@ class Board:
 
         return legal_moves
     
+    def get_Bishop_moves(self, row, file, colour):
+        legal_moves = []
+        # This is uses the same logic the rook uses, but a while loop is needed insted.
+        # Because a nested for loop would iterate through all the file positions,
+        # then iterate a single time in the row position (for row..:
+        #                                                   for file..:)
+        # As a result, generated a grid like pattern for viable moves.
+        # In a while loop, you can iterate through rows and files simultaneously.
+        # So you can generate the diagonal move set. 
+         
+        # Top left diagonal
+        r = row - 1
+        f = file - 1
+        while r >= 0 and f >= 0:
+            if self.is_empty(r, f):
+                legal_moves.append((r, f))
+            elif self.is_enemy(r, f, colour):
+                legal_moves.append((r, f))
+                break
+            else:
+                break
+            r -= 1
+            f -= 1
+        
+        
+        # Bottom right diagonal
+        r = row + 1
+        f = file + 1
+        while r < 8 and f < 8:
+            if self.is_empty(r, f):
+                legal_moves.append((r, f))
+            elif self.is_enemy(r, f, colour):
+                legal_moves.append((r, f))
+                break
+            else:
+                break
+            r += 1
+            f += 1
+        
+        # Top right diagonal
+        r = row - 1
+        f = file + 1
+        while r >= 0 and f < 8:
+            if self.is_empty(r, f):
+                legal_moves.append((r, f))
+            elif self.is_enemy(r, f, colour):
+                legal_moves.append((r, f))
+                break
+            else:
+                break
+            r -= 1
+            f += 1
+        
+        # Bottom left diagonal
+        r = row + 1
+        f = file - 1
+        while r < 8 and f >= 0:
+            if self.is_empty(r, f):
+                legal_moves.append((r, f))
+            elif self.is_enemy(r, f, colour):
+                legal_moves.append((r, f))
+                break
+            else:
+                break
+            r += 1
+            f -= 1        
+        
+        return legal_moves
+    
+    def get_Queen_moves(self, row, file, colour):
+        # Peak Pattern spotting:
+        bishop_moves = self.get_Bishop_moves(row, file, colour)
+        rook_moves = self.get_Rook_moves(row, file, colour)
+    
+        legal_moves = bishop_moves + rook_moves
+
+        return legal_moves    
+    
+    def get_King_moves(self, row, file, colour):
+        legal_moves = []
+        # All the possible king moves
+        directions = [
+        (-1, 0), (1, 0),                    # vertical (up, down)
+        (0, -1), (0, 1),                    # horizontal (left, right)
+        (-1, -1), (-1, 1), (1, -1), (1, 1)  # diagonal (top-left, top-right, bottom-left, bottom-right)
+        ]
+
+        for d_row, d_file in directions:
+            r = row + d_row
+            f = file + d_file
+            if 0 <= r < 8 and 0 <= f < 8:  # Ensure within board bounds
+                if self.is_empty(r, f) or self.is_enemy(r, f, colour):
+                    legal_moves.append((r, f))
+        return legal_moves
+    
+    def get_Knight_moves(self, row, file, colour):
+        legal_moves = []
+        # All the possible moves a knight can make
+        directions = [     
+        (2, 1), (2, -1),    # In hindsight, I think I could have used this method               
+        (-2, 1), (-2, -1),  # for all the pieces.... It is much simpler.                 
+        (1, -2), (-1, -2),  #(maybe except the pawn, but the point still stands)
+        (1, 2), (-1, 2)  
+        ]
+        
+        for d_row, d_file in directions:
+            r = row + d_row
+            f = file + d_file
+            if 0 <= r < 8 and 0 <= f < 8:  # Ensure within board bounds
+                if self.is_empty(r, f) or self.is_enemy(r, f, colour):
+                    legal_moves.append((r, f))
+        return legal_moves
+    
     def get_legal_moves(self, piece_type, colour, position):
         row, file = position // 8, position % 8    # this works, pick a number from 0 - 720 to test
         global moves
@@ -177,23 +281,21 @@ class Board:
         if piece_type == Piece.King:
             moves = self.get_King_moves(row, file, colour)
         
-
-    
-
-        
         return moves
     
     def is_empty(self, row, file):
         index = row * 8 + file
         return 0 <= row < 8 and 0 <= file < 8 and self.Square[index] == Piece.Empty
 
-    def is_enemy(self, row, file, color):
+    def is_enemy(self, row, file, colour):
         index = row * 8 + file
-        if 0 <= row < 8 and 0 <= file < 8:
+        if 0 <= row < 8 and 0 <= file < 8:      # Ensure piece is within board boundaries (boundary check)
             piece = self.Square[index]          # refers to the piece at that index of the board
-            return piece != Piece.Empty and (piece & Piece.White) != color # check if square is empty and if the colours match
-        return False
-
+            return piece != Piece.Empty and (piece & Piece.White) != (colour & Piece.White) # check if square is empty and if the colours don't match
+        return False                            # ^ here we use the bitwise AND operator (&) so we can compare specific attributes with varibles.
+                                                # This is because to assign those attributes, we used the bitwiise OR operator (|) meaning the attributes of the pieces are stored in binary.
+                                                # Therefore, this the second argument for that And gate asks, if the colour of the piece is Not equal to white.
+    
     def draw_pieces(self, screen, dragging_piece=None, dragging_pos=(0, 0)):
         for index, piece in enumerate(self.Square):
             if piece != Piece.Empty and piece != dragging_piece:  #checks if a piece is to be rendered.
@@ -204,7 +306,17 @@ class Board:
                     screen.blit(piece_image, (col * single_square_size, row * single_square_size))
         if dragging_piece:
             screen.blit(selected_piece_img, dragging_pos)
-    
+
+def Create_graphical_board():
+    for file in range (8):
+        for row in range (8):
+            isLightsquare = (file + row) % 2 != 0
+            if isLightsquare:
+                square_colour = peach
+            else:
+                square_colour = chocolate
+            pygame.draw.rect(screen, square_colour, (single_square_size * file, single_square_size * row , single_square_size , single_square_size ))
+            
 chess_board = Board()  # Initialised the board class so it can be called throughout the program
 
 selected_piece = None
@@ -212,7 +324,7 @@ dragging = False
 offset_x = 0
 offset_y = 0
 original_square = None
-load_position_from_fen(chess_board, "RNBQKBNR/PPPPPPPP/8/8/8/8/pppppppp/rnbqkbnr w - - 0 1") # that is a fen string
+load_position_from_fen(chess_board, "RNBQK1NR/PPPPPPPP/8/8/3B4/8/pppppppp/rnbqkbnr b KQkq - 0 1") # that is a fen string
 
 while running:
     
@@ -234,7 +346,6 @@ while running:
                 offset_y = mouse_y - (row * single_square_size)
                 original_square = index # records the original square using the index
                 
-                
                 selected_piece = chess_board.Square[index]  ##################################################
                 if (selected_piece & Piece.White):
                     piece_color = Piece.White & selected_piece
@@ -244,21 +355,16 @@ while running:
                 selected_piece_type = selected_piece & 0b111  # Calculate legal moves  # Get the type by isolating last 3 bits
                 legal_moves = chess_board.get_legal_moves(selected_piece_type, piece_color, original_square)
                 chess_board.Square[original_square] = Piece.Empty # when a move is being chosen, clears the og square
-
-
-        
+                
         elif event.type == pygame.MOUSEMOTION and dragging:
             mouse_x, mouse_y = event.pos # if dragging, update the position
-
+            
                 
         elif event.type == pygame.MOUSEBUTTONUP and dragging:
             new_file = mouse_x // single_square_size # records the file/row of the updated pos
             new_row = mouse_y // single_square_size
             new_index = new_row * 8 + new_file
-            
-        
-            
-                
+                            
             if (new_row, new_file) in moves:
                 chess_board.Square[new_index] = selected_piece     # Move piece
             else:
@@ -271,8 +377,7 @@ while running:
 
     Create_graphical_board()
     chess_board.draw_pieces(screen, selected_piece_img if dragging else None, (mouse_x - offset_x, mouse_y - offset_y) if dragging else (0, 0)) # essentially just draws selected pieces if they are being dragged, else don't draw pieces that are not being dragged.
-    
-   
+     
     pygame.display.flip()
     clock.tick(60)
 pygame.quit()
