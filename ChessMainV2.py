@@ -10,7 +10,7 @@ running = True
 square_colour = ""
 peach = (237, 232, 208)
 chocolate = (85, 43, 0)
-highlight_colour = (0, 255, 0)
+highlight_colour = (128, 128, 128)
 
 white_pawn = pygame.transform.scale(pygame.image.load("Chess bot folder/white_pawn.png"), (single_square_size, single_square_size))
 Black_pawn = pygame.transform.scale(pygame.image.load("Chess bot folder/Black_pawn.png"), (single_square_size, single_square_size))
@@ -346,7 +346,7 @@ while running:
                 offset_y = mouse_y - (row * single_square_size)
                 original_square = index # records the original square using the index
                 
-                selected_piece = chess_board.Square[index]  ##################################################
+                selected_piece = chess_board.Square[index]  # The selected piece is the piece at the original square on the board
                 if (selected_piece & Piece.White):
                     piece_color = Piece.White & selected_piece
                 else:
@@ -355,6 +355,8 @@ while running:
                 selected_piece_type = selected_piece & 0b111  # Calculate legal moves  # Get the type by isolating last 3 bits
                 legal_moves = chess_board.get_legal_moves(selected_piece_type, piece_color, original_square)
                 chess_board.Square[original_square] = Piece.Empty # when a move is being chosen, clears the og square
+
+                
                 
         elif event.type == pygame.MOUSEMOTION and dragging:
             mouse_x, mouse_y = event.pos # if dragging, update the position
@@ -377,7 +379,20 @@ while running:
 
     Create_graphical_board()
     chess_board.draw_pieces(screen, selected_piece_img if dragging else None, (mouse_x - offset_x, mouse_y - offset_y) if dragging else (0, 0)) # essentially just draws selected pieces if they are being dragged, else don't draw pieces that are not being dragged.
-     
+
+    if selected_piece:
+        for move in legal_moves:
+            # Calculate the row and file from the move index
+            row, file = move
+
+            # Calculate the center position for the circle
+            center_x = (file * single_square_size) + (single_square_size // 2)
+            center_y = (row * single_square_size) + (single_square_size // 2)
+    
+            # Draws the circle
+            pygame.draw.circle(screen, highlight_colour, (center_x, center_y), single_square_size // 6)
+                
+
     pygame.display.flip()
     clock.tick(60)
 pygame.quit()
