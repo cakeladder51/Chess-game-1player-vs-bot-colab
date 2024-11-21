@@ -12,18 +12,18 @@ peach = (237, 232, 208)
 chocolate = (85, 43, 0)
 highlight_colour = (128, 128, 128)
 
-white_pawn = pygame.transform.scale(pygame.image.load("Chess bot folder/white_pawn.png"), (single_square_size, single_square_size))
-Black_pawn = pygame.transform.scale(pygame.image.load("Chess bot folder/Black_pawn.png"), (single_square_size, single_square_size))
-white_rook = pygame.transform.scale(pygame.image.load("Chess bot folder/white_rook.png"), (single_square_size, single_square_size))
-Black_rook = pygame.transform.scale(pygame.image.load("Chess bot folder/Black_rook.png"), (single_square_size, single_square_size))
-white_knight = pygame.transform.scale(pygame.image.load("Chess bot folder/white_knight.png"), (single_square_size, single_square_size))
-Black_knight = pygame.transform.scale(pygame.image.load("Chess bot folder/Black_knight.png"), (single_square_size, single_square_size))
-white_bishop = pygame.transform.scale(pygame.image.load("Chess bot folder/white_bishop.png"), (single_square_size, single_square_size))
-Black_bishop = pygame.transform.scale(pygame.image.load("Chess bot folder/Black_bishop.png"), (single_square_size, single_square_size))
-white_queen = pygame.transform.scale(pygame.image.load("Chess bot folder/white_queen.png"), (single_square_size, single_square_size))
-Black_queen = pygame.transform.scale(pygame.image.load("Chess bot folder/Black_queen.png"), (single_square_size, single_square_size))
-white__king = pygame.transform.scale(pygame.image.load("Chess bot folder/white_king.png"), (single_square_size, single_square_size))
-Black__king = pygame.transform.scale(pygame.image.load("Chess bot folder/Black_king.png"), (single_square_size, single_square_size))
+white_pawn = pygame.transform.scale(pygame.image.load("Chess bot folder/white_pawn_low.png"), (single_square_size, single_square_size))
+Black_pawn = pygame.transform.scale(pygame.image.load("Chess bot folder/Black_pawn_low.png"), (single_square_size, single_square_size))
+white_rook = pygame.transform.scale(pygame.image.load("Chess bot folder/white_rook_low.png"), (single_square_size, single_square_size))
+Black_rook = pygame.transform.scale(pygame.image.load("Chess bot folder/Black_rook_low.png"), (single_square_size, single_square_size))
+white_knight = pygame.transform.scale(pygame.image.load("Chess bot folder/white_knight_low.png"), (single_square_size, single_square_size))
+Black_knight = pygame.transform.scale(pygame.image.load("Chess bot folder/Black_knight_low.png"), (single_square_size, single_square_size))
+white_bishop = pygame.transform.scale(pygame.image.load("Chess bot folder/white_bishop_low.png"), (single_square_size, single_square_size))
+Black_bishop = pygame.transform.scale(pygame.image.load("Chess bot folder/Black_bishop_low.png"), (single_square_size, single_square_size))
+white_queen = pygame.transform.scale(pygame.image.load("Chess bot folder/white_queen_low.png"), (single_square_size, single_square_size))
+Black_queen = pygame.transform.scale(pygame.image.load("Chess bot folder/Black_queen_low.png"), (single_square_size, single_square_size))
+white__king = pygame.transform.scale(pygame.image.load("Chess bot folder/white_king_low.png"), (single_square_size, single_square_size))
+Black__king = pygame.transform.scale(pygame.image.load("Chess bot folder/Black_king_low.png"), (single_square_size, single_square_size))
 
 def load_position_from_fen(initilised_board, fen):
     piece_type_from_symbol = {
@@ -244,6 +244,8 @@ class Board:
             if 0 <= r < 8 and 0 <= f < 8:  # Ensure within board bounds
                 if self.is_empty(r, f) or self.is_enemy(r, f, colour):
                     legal_moves.append((r, f))
+                else:
+                    break
         return legal_moves
     
     def get_Knight_moves(self, row, file, colour):
