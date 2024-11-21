@@ -324,7 +324,7 @@ dragging = False
 offset_x = 0
 offset_y = 0
 original_square = None
-load_position_from_fen(chess_board, "RNBQK1NR/PPPPPPPP/8/8/3B4/8/pppppppp/rnbqkbnr b KQkq - 0 1") # that is a fen string
+load_position_from_fen(chess_board, "RNBQKBNR/PPPPPPPP/8/8/8/8/pppppppp/rnbqkbnr b KQkq - 0 1") # that is a fen string
 
 while running:
     
